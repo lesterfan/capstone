@@ -9,7 +9,7 @@ def simulate_once(k, n, f, s, r):
     a message.
     """
     assert(k <= n <= f <= s)
-    # Make a random r-regular graph of size s
+    # Make a random connected r-regular graph of size s
     G = nx.random_regular_graph(r, s)
     while not nx.is_connected(G):
         G = nx.random_regular_graph(r, s)

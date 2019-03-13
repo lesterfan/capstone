@@ -1,31 +1,6 @@
 import networkx as nx 
 import random
 
-def make_regular_graph(s, r):
-    """
-    Makes a r-regular graph of size s.
-    Follows the answer given in:
-    https://math.stackexchange.com/questions/142112/how-to-construct-a-k-regular-graph
-    """
-    assert( r <= s and (r % 2 == 0 or s % 2 == 0) )
-    G = nx.Graph()
-    for i in range(s):
-        G.add_node(i, has_bit = False)
-    # Arrange vertices around in a circle, and join each to its r//2 nearest neighbors.
-    for i in range(s):
-        for offset in range(-(r//2), r//2 + 1):
-            if offset == 0:
-                continue
-            j = (i + offset) % s
-            G.add_edge(i, j)
-    # If r is odd, also connect each vertex to the one directly opposite it.
-    if r % 2 != 0:
-        for i in range(s):
-            j = (i + (s // 2)) % s
-            G.add_edge(i, j)
-    # print(f'Here are the degrees of all the vertices: {[len(G.adj[x]) for x in range(s)]}')
-    return G
-
 def simulate_once(k, n, f, s, r):
     """
     Simulates the communication of a single block of n code bits made into k
@@ -35,7 +10,11 @@ def simulate_once(k, n, f, s, r):
     """
     assert(k <= n <= f <= s)
     # Make a random r-regular graph of size s
-    G = make_regular_graph(s, r)
+    G = nx.random_regular_graph(r, s)
+    while not nx.is_connected(G):
+        G = nx.random_regular_graph(r, s)
+    for i in range(s):
+        G.node[i]['has_bit'] = False
     time_elapsed = 0
     # Disseminate
     F = set(random.sample(range(s), f))
@@ -74,9 +53,9 @@ if __name__ == "__main__":
     m = 1000
     f = 20
     s = 30
-    r = 14
+    r = 10
     for i in range(len(ks)):
         k, n = ks[i], ns[i]
         total_time = simulate(m, k, n, f, s, r)
-        print(f'For k = {k}, n = {n}, f = {f}, s = {s}, m = {m}, total_time = {total_time}')
+        print(f'For k = {k}, n = {n}, f = {f}, s = {s}, m = {m}, r = {r}, total_time = {total_time}')
 

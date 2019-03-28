@@ -116,6 +116,8 @@ def raw_animate(m, k, n, f, s, r, update_interval, repeat):
     plt.show()
 
 def animate(m, k, n, f, s, r, update_interval = 500, repeat = False):
+    assert(k <= n and n <= f and f <= s)
+    nx.random_regular_graph(r, s)
     p = Process(target=raw_animate, args=(m, k, n, f, s, r, update_interval, repeat))
     p.start()
 

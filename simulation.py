@@ -90,6 +90,7 @@ def update_canvas(i):
     nx.draw_networkx_nodes(G, pos=pos, nodelist=F, node_color=friend_color, ax=ax)
     nx.draw_networkx_nodes(G, pos=pos, nodelist=curr_owners, node_color=owner_color, ax=ax)
     nx.draw_networkx_nodes(G, pos=pos, nodelist=[curr_node], node_color=path_color, ax=ax)
+    plt.axis('off')
     ax.set_title(ani_title + f' (batch {batch_nums[i]}/{num_times}, t = {i + 1})')
     ax.legend(handles, labels)
 
@@ -97,7 +98,7 @@ def animate(m, k, n, f, s, r):
     global fig, pos, ax, ani, ani_title
     simulate(m, k, n, f, s, r)
     fig, ax = plt.subplots()
-    pos = nx.spring_layout(G)
+    pos = nx.circular_layout(G)
     ani_title = f'k = {k}, n = {n}, f = {f}, s = {s}, m = {m}, r = {r}'
     ani = matplotlib.animation.FuncAnimation(fig, update_canvas, frames=len(owners_list), interval=500, repeat=False)
     plt.show()

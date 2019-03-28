@@ -1,5 +1,6 @@
 from tkinter import *
 import simulation
+import traceback
 
 if __name__ == "__main__":
     # Set up window for simulation
@@ -36,7 +37,7 @@ if __name__ == "__main__":
     clickedLabel.grid(column=0, row=i+1)
 
     animTextPre = "Running animation on the given parameters..."
-    animTextPost = "Successfully ran animation on paramters- check other window"
+    animTextPost = "Running animation on paramters- check other window"
     timeTextPre = "Finding the time taken on the given parameters..."
     timeTextPost = "Time required to run simulation on given parameters: "
 
@@ -49,7 +50,7 @@ if __name__ == "__main__":
             simulation.animate(*vals)
             clickedLabel.configure(text=animTextPost)
         except Exception as error:
-            clickedLabel.configure(text=str(error))
+            clickedLabel.configure(text=traceback.format_exc())
 
     # Perform simulation (find time only) on the given parameters
     def clickedTime():
@@ -60,7 +61,7 @@ if __name__ == "__main__":
             time = simulation.simulate(*vals)
             clickedLabel.configure(text=timeTextPost + str(time))
         except Exception as error:
-            clickedLabel.configure(text=str(error))
+            clickedLabel.configure(text=traceback.format_exc())
 
     # Buttons for animation and simulation
     animBtn = Button(window, text="Run Animation", command=clickedAnimation)

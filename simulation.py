@@ -71,31 +71,46 @@ class Simulation:
         message bits through redundancy. This is done on an r-regular graph of size
         s, in which we have f friends to which we can possibly send a message.
         """
+        assert(k <= m)
         self.num_times = m // k
         return sum([self.simulate_once(k, n, batch_num=i + 1) for i in range(self.num_times)])
 
-def update_canvas(sim_obj):
-    def closure(i):
-        curr_owners = sim_obj.owners_list[i]
-        stage, curr_node = sim_obj.path[i]
-        reg_color = "yellow"
-        friend_color = "green"
-        owner_color = "red"
-        disseminate_color = "blue"
-        collect_color = "purple"
-        path_color = disseminate_color if stage == "disseminate" else collect_color
-        handles = [Line2D([0], [0], color=color, lw=4) for color in (reg_color, friend_color, owner_color, disseminate_color, collect_color)]
-        labels = ["Other", "Friends", "Bit Owners", "Disseminator", "Collector"]
-        sim_obj.ax.clear()
-        nx.draw_networkx_edges(sim_obj.G, pos=sim_obj.pos, edge_color="black", ax=sim_obj.ax)
-        nx.draw_networkx_nodes(sim_obj.G, pos=sim_obj.pos, nodelist=sim_obj.G.nodes(), node_color=reg_color, ax=sim_obj.ax)
-        nx.draw_networkx_nodes(sim_obj.G, pos=sim_obj.pos, nodelist=sim_obj.F, node_color=friend_color, ax=sim_obj.ax)
-        nx.draw_networkx_nodes(sim_obj.G, pos=sim_obj.pos, nodelist=curr_owners, node_color=owner_color, ax=sim_obj.ax)
-        nx.draw_networkx_nodes(sim_obj.G, pos=sim_obj.pos, nodelist=[curr_node], node_color=path_color, ax=sim_obj.ax)
-        plt.axis('off')
-        sim_obj.ax.set_title(sim_obj.ani_title + f' (batch {sim_obj.batch_nums[i]}/{sim_obj.num_times}, t = {i + 1})')
-        sim_obj.ax.legend(handles, labels)
-    return closure
+    def animate(self, m, k, n, update_interval, repeat):
+        """
+        Simulates the communication of a message of size m through sending
+        blocks of n code bits made into k
+        message bits through redundancy. This is done on an r-regular graph of size
+        s, in which we have f friends to which we can possibly send a message.
+        """
+        self.fig, self.ax = plt.subplots()
+        self.pos = nx.circular_layout(self.G)
+        self.ani_title = f'k = {k}, n = {n}, f = {self.f}, s = {self.s}, m = {m}, r = {self.r}'
+        update_func = self.canvas_update_closure()
+        self.ani = matplotlib.animation.FuncAnimation(self.fig, update_func, frames=len(self.owners_list), interval=update_interval, repeat=repeat)
+        plt.show()
+
+    def canvas_update_closure(self):
+        def closure(i):
+            curr_owners = self.owners_list[i]
+            stage, curr_node = self.path[i]
+            reg_color = "yellow"
+            friend_color = "green"
+            owner_color = "red"
+            disseminate_color = "blue"
+            collect_color = "purple"
+            path_color = disseminate_color if stage == "disseminate" else collect_color
+            handles = [Line2D([0], [0], color=color, lw=4) for color in (reg_color, friend_color, owner_color, disseminate_color, collect_color)]
+            labels = ["Other", "Friends", "Bit Owners", "Disseminator", "Collector"]
+            self.ax.clear()
+            nx.draw_networkx_edges(self.G, pos=self.pos, edge_color="black", ax=self.ax)
+            nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=self.G.nodes(), node_color=reg_color, ax=self.ax)
+            nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=self.F, node_color=friend_color, ax=self.ax)
+            nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=curr_owners, node_color=owner_color, ax=self.ax)
+            nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=[curr_node], node_color=path_color, ax=self.ax)
+            plt.axis('off')
+            self.ax.set_title(self.ani_title + f' (batch {self.batch_nums[i]}/{self.num_times}, t = {i + 1})')
+            self.ax.legend(handles, labels)
+        return closure
     
 def simulate_once(self, k, n, f, s, r):
     simul = Simulation(f, s, r)
@@ -105,20 +120,10 @@ def simulate(m, k, n, f, s, r):
     simul = Simulation(f, s, r)
     return simul.simulate(m, k, n)
 
-def raw_animate(m, k, n, f, s, r, update_interval, repeat):  
+def animate(m, k, n, f, s, r, update_interval = 500, repeat = False):
     simul = Simulation(f, s, r)
     simul.simulate(m, k, n)
-    simul.fig, simul.ax = plt.subplots()
-    simul.pos = nx.circular_layout(simul.G)
-    simul.ani_title = f'k = {k}, n = {n}, f = {f}, s = {s}, m = {m}, r = {r}'
-    update_func = update_canvas(simul)
-    simul.ani = matplotlib.animation.FuncAnimation(simul.fig, update_func, frames=len(simul.owners_list), interval=update_interval, repeat=repeat)
-    plt.show()
-
-def animate(m, k, n, f, s, r, update_interval = 500, repeat = False):
-    assert(k <= n and n <= f and f <= s)
-    nx.random_regular_graph(r, s)
-    p = Process(target=raw_animate, args=(m, k, n, f, s, r, update_interval, repeat))
+    p = Process(target=simul.animate, args=(m, k, n, update_interval, repeat))
     p.start()
 
 def run_sims():

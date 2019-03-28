@@ -105,18 +105,18 @@ def simulate(m, k, n, f, s, r):
     simul = Simulation(f, s, r)
     return simul.simulate(m, k, n)
 
-def raw_animate(m, k, n, f, s, r):  
+def raw_animate(m, k, n, f, s, r, update_interval, repeat):  
     simul = Simulation(f, s, r)
     simul.simulate(m, k, n)
     simul.fig, simul.ax = plt.subplots()
     simul.pos = nx.circular_layout(simul.G)
     simul.ani_title = f'k = {k}, n = {n}, f = {f}, s = {s}, m = {m}, r = {r}'
     update_func = update_canvas(simul)
-    simul.ani = matplotlib.animation.FuncAnimation(simul.fig, update_func, frames=len(simul.owners_list), interval=500, repeat=False)
+    simul.ani = matplotlib.animation.FuncAnimation(simul.fig, update_func, frames=len(simul.owners_list), interval=update_interval, repeat=repeat)
     plt.show()
 
-def animate(m, k, n, f, s, r):
-    p = Process(target=raw_animate, args=(m, k, n, f, s, r))
+def animate(m, k, n, f, s, r, update_interval = 500, repeat = False):
+    p = Process(target=raw_animate, args=(m, k, n, f, s, r, update_interval, repeat))
     p.start()
 
 def run_sims():
@@ -138,7 +138,7 @@ def run_animation():
     f = 20
     s = 30
     r = 10
-    animate(m, k, n, f, s, r)
+    animate(m, k, n, f, s, r, update_interval=500)
 
 def run_animations():
     ks = [5, 10]
@@ -153,5 +153,5 @@ def run_animations():
 
 if __name__ == "__main__":
     # run_sims()
-    # run_animation()
-    run_animations()
+    run_animation()
+    # run_animations()

@@ -87,6 +87,7 @@ class Simulation:
         def closure(i):
             curr_owners = self.owners_list[i]
             stage, curr_node = self.path[i]
+            prev_stage, prev_node = self.path[i - 1] if i > 0 else (None, None)
             reg_color = "black"
             friend_color = "orange"
             owner_color = "red"
@@ -98,6 +99,8 @@ class Simulation:
             other_nodes = set(self.G.nodes()) - set(self.F)
             self.ax.clear()
             nx.draw_networkx_edges(self.G, pos=self.pos, edge_color="black", ax=self.ax)
+            if prev_stage == stage and prev_node is not None:
+                nx.draw_networkx_edges(self.G, pos=self.pos, edgelist = [(prev_node, curr_node)], edge_color=path_color, ax=self.ax, width = 3.0)
             nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=other_nodes, node_color=reg_color, ax=self.ax, node_shape = '$o$')
             nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=self.F, node_color=friend_color, ax=self.ax, node_shape = '$f$')
             nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=curr_owners, node_color=owner_color, ax=self.ax, node_shape = '$f$')

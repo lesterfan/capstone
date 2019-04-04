@@ -76,12 +76,6 @@ class Simulation:
         return sum([self.simulate_once(k, n, batch_num=i + 1) for i in range(self.num_times)])
 
     def animate(self, m, k, n, update_interval, repeat):
-        """
-        Simulates the communication of a message of size m through sending
-        blocks of n code bits made into k
-        message bits through redundancy. This is done on an r-regular graph of size
-        s, in which we have f friends to which we can possibly send a message.
-        """
         self.fig, self.ax = plt.subplots()
         self.pos = nx.circular_layout(self.G)
         self.ani_title = f'k = {k}, n = {n}, f = {self.f}, s = {self.s}, m = {m}, r = {self.r}'
@@ -93,20 +87,21 @@ class Simulation:
         def closure(i):
             curr_owners = self.owners_list[i]
             stage, curr_node = self.path[i]
-            reg_color = "yellow"
-            friend_color = "green"
+            reg_color = "black"
+            friend_color = "orange"
             owner_color = "red"
             disseminate_color = "blue"
             collect_color = "purple"
             path_color = disseminate_color if stage == "disseminate" else collect_color
             handles = [Line2D([0], [0], color=color, lw=4) for color in (reg_color, friend_color, owner_color, disseminate_color, collect_color)]
             labels = ["Other", "Friends", "Bit Owners", "Disseminator", "Collector"]
+            other_nodes = set(self.G.nodes()) - set(self.F)
             self.ax.clear()
             nx.draw_networkx_edges(self.G, pos=self.pos, edge_color="black", ax=self.ax)
-            nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=self.G.nodes(), node_color=reg_color, ax=self.ax)
-            nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=self.F, node_color=friend_color, ax=self.ax)
-            nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=curr_owners, node_color=owner_color, ax=self.ax)
-            nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=[curr_node], node_color=path_color, ax=self.ax)
+            nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=other_nodes, node_color=reg_color, ax=self.ax, node_shape = '$o$')
+            nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=self.F, node_color=friend_color, ax=self.ax, node_shape = '$f$')
+            nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=curr_owners, node_color=owner_color, ax=self.ax, node_shape = '$f$')
+            nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=[curr_node], node_color=path_color, ax=self.ax, node_shape = f'${stage[0]}$')
             plt.axis('off')
             self.ax.set_title(self.ani_title + f' (batch {self.batch_nums[i]}/{self.num_times}, t = {i + 1})')
             self.ax.legend(handles, labels)
@@ -120,7 +115,7 @@ def simulate(m, k, n, f, s, r):
     simul = Simulation(f, s, r)
     return simul.simulate(m, k, n)
 
-def animate(m, k, n, f, s, r, update_interval = 500, repeat = False):
+def animate(m, k, n, f, s, r, update_interval = 1000, repeat = False):
     simul = Simulation(f, s, r)
     simul.simulate(m, k, n)
     p = Process(target=simul.animate, args=(m, k, n, update_interval, repeat))
@@ -145,7 +140,7 @@ def run_animation():
     f = 20
     s = 30
     r = 10
-    animate(m, k, n, f, s, r, update_interval=500)
+    animate(m, k, n, f, s, r)
 
 def run_animations():
     ks = [5, 10]

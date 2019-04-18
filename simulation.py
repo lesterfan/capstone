@@ -3,6 +3,7 @@ from multiprocessing import Process
 import matplotlib.pyplot as plt
 import networkx as nx 
 import matplotlib.animation
+import matplotlib.markers as mrks
 import random
 import copy
 
@@ -81,6 +82,8 @@ class Simulation:
         self.ani_title = f'k = {k}, n = {n}, f = {self.f}, s = {self.s}, m = {m}, r = {self.r}'
         update_func = self.canvas_update_closure()
         self.ani = matplotlib.animation.FuncAnimation(self.fig, update_func, frames=len(self.owners_list), interval=update_interval, repeat=repeat)
+        figManager = plt.get_current_fig_manager()
+        figManager.window.showMaximized()
         plt.show()
 
     def canvas_update_closure(self):
@@ -88,8 +91,8 @@ class Simulation:
             curr_owners = self.owners_list[i]
             stage, curr_node = self.path[i]
             prev_stage, prev_node = self.path[i - 1] if i > 0 else (None, None)
-            reg_color = "black"
-            friend_color = "orange"
+            reg_color = "white"
+            friend_color = "yellow"
             owner_color = "red"
             disseminate_color = "blue"
             collect_color = "purple"
@@ -101,10 +104,10 @@ class Simulation:
             nx.draw_networkx_edges(self.G, pos=self.pos, edge_color="black", ax=self.ax)
             if prev_stage == stage and prev_node is not None:
                 nx.draw_networkx_edges(self.G, pos=self.pos, edgelist = [(prev_node, curr_node)], edge_color=path_color, ax=self.ax, width = 3.0)
-            nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=other_nodes, node_color=reg_color, ax=self.ax, node_shape = '$o$')
-            nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=self.F, node_color=friend_color, ax=self.ax, node_shape = '$f$')
-            nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=curr_owners, node_color=owner_color, ax=self.ax, node_shape = '$f$')
-            nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=[curr_node], node_color=path_color, ax=self.ax, node_shape = f'${stage[0]}$')
+            nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=other_nodes, node_color=reg_color, ax=self.ax, linewidths=1.5, edgecolors="black")
+            nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=self.F, node_color=friend_color, ax=self.ax)
+            nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=curr_owners, node_color=owner_color, ax=self.ax)
+            nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=[curr_node], node_color=path_color, ax=self.ax)
             plt.axis('off')
             self.ax.set_title(self.ani_title + f' (batch {self.batch_nums[i]}/{self.num_times}, t = {i + 1})')
             self.ax.legend(handles, labels)

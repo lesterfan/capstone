@@ -10,7 +10,7 @@ import itertools
 import player
 
 class Simulation:
-    def __init__(self, f, s, r, graph_type = "regular", rows = -1, cols = -1, num_hubs = -1):
+    def __init__(self, f, s, r, graph_type = "Regular", rows = -1, cols = -1, num_hubs = -1):
         self.G = None
         self.F = set([])
         self.owners_list = []
@@ -26,12 +26,12 @@ class Simulation:
         self.r = r
         self.graph_type = graph_type
         self.num_hubs = num_hubs
-        if graph_type == "regular":
+        if graph_type == "Regular":
             self.G = self.make_reg_graph(f, s, r)
-        elif graph_type == "euclidean":
+        elif graph_type == "Euclidean":
             assert(s == rows * cols)
             self.G = nx.grid_2d_graph(rows, cols)
-        elif graph_type == "network":
+        elif graph_type == "Network":
             assert( num_hubs > 0 )
             # sequence = nx.generators.degree_seq.create_degree_sequence(s, nx.utils.powerlaw_sequence)
             # self.G = nx.configuration_model(sequence)
@@ -104,11 +104,11 @@ class Simulation:
 
     def animate(self, m, k, n, repeat):
         self.fig, self.ax = plt.subplots()
-        if self.graph_type == "regular":
+        if self.graph_type == "Regular":
             self.pos = nx.circular_layout(self.G)
-        elif self.graph_type == "euclidean":
+        elif self.graph_type == "Euclidean":
             self.pos = nx.spectral_layout(self.G)
-        elif self.graph_type == "network":
+        elif self.graph_type == "Network":
             self.pos = nx.spring_layout(self.G)
         self.ani_title = f'k = {k}, n = {n}, f = {self.f}, s = {self.s}, m = {m}, r = {self.r}'
         update_func = self.canvas_update_closure()
@@ -159,15 +159,15 @@ class Simulation:
             self.ax.legend(handles, labels)
         return closure
     
-def simulate_once(self, k, n, f, s, r, graph_type = "regular", rows = 0, cols = 0, num_hubs = -1):
+def simulate_once(self, k, n, f, s, r, graph_type = "Regular", rows = 0, cols = 0, num_hubs = -1):
     simul = Simulation(f, s, r, graph_type = graph_type, rows = rows, cols = cols, num_hubs = num_hubs)
     return simul.simulate_once(k, n)
 
-def simulate(m, k, n, f, s, r, graph_type = "regular", rows = 0, cols = 0, num_hubs = -1):
+def simulate(m, k, n, f, s, r, graph_type = "Regular", rows = 0, cols = 0, num_hubs = -1):
     simul = Simulation(f, s, r, graph_type = graph_type, rows = rows, cols = cols, num_hubs = num_hubs)
     return simul.simulate(m, k, n)
 
-def animate(m, k, n, f, s, r, repeat = False, graph_type = "regular", rows = 0, cols = 0, num_hubs = -1):
+def animate(m, k, n, f, s, r, repeat = False, graph_type = "Regular", rows = 0, cols = 0, num_hubs = -1):
     simul = Simulation(f, s, r, graph_type = graph_type, rows = rows, cols = cols, num_hubs=num_hubs)
     simul.simulate(m, k, n)
     p = Process(target=simul.animate, args=(m, k, n, repeat))
@@ -202,7 +202,7 @@ def run_animation_euclidean():
     f = 20
     s = 25
     r = 10
-    graph_type = "euclidean"
+    graph_type = "Euclidean"
     rows = 5
     cols = 5
     animate(m, k, n, f, s, r, graph_type=graph_type, rows=rows, cols=cols)
@@ -214,7 +214,7 @@ def run_animation_network():
     f = 20
     s = 25
     r = 10
-    graph_type = "network"
+    graph_type = "Network"
     num_hubs = 4
     animate(m, k, n, f, s, r, graph_type=graph_type, num_hubs=num_hubs)
 

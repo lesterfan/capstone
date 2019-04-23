@@ -22,21 +22,21 @@ def loadSimPage(window):
 
     # Parameters and default values
     paramArr = ["m", "k", "n", "f", "s", "r", # parameters shared among all graphs
-                "r", "c", # parameters present in only Euclidean
-                "h" # parameters present in only network graph
+                "rows", "cols", # parameters present in only Euclidean
+                "num_hubs" # parameters present in only network graph
                 ]
     indOfEuc = 6
     indOfHub = 8
     defVals = [10, 5, 10, 20, 30, 10, 1, 1, 1]
     textArr = ["Message length",
-               "Number of blocks to break into",
-               "Size of codeword",
-               "Number of friends on graph that may hold blocks",
+               "Number of message bits in each block",
+               "Size of codeword after adding redundancy",
+               "Number of friends on graph that may hold bits",
                "Size/number of nodes on graph",
-               "Degree of each node (exact number of neighbors of each node)",
+               "Degree of each node (only in Regular graphs)",
                "Number of rows (only in Euclidean graphs)",
                "Number of columns (only in Euclidean graphs)",
-               "Number of hubs (only in network graphs)"]
+               "Number of hubs (only in Network graphs)"]
 
     # Set up area to enter info
     entrySpace = []
@@ -72,10 +72,11 @@ def loadSimPage(window):
     # Perform animation on the given parameters
     def clickedAnimation():
         try:
-            vals = []
+            currType = graphOptionVal.get()
             vals = [int(entry.get()) for entry in entrySpace]
+            m, k, n, f, s, r, rows, cols, num_hubs = vals
             clickedLabel.configure(text=animTextPre)
-            simulation.animate(*vals)
+            simulation.animate(m, k, n, f, s, r, graph_type = currType, rows = rows, cols = cols, num_hubs=num_hubs)
             clickedLabel.configure(text=animTextPost)
         except Exception as error:
             clickedLabel.configure(text=traceback.format_exc())
@@ -83,10 +84,11 @@ def loadSimPage(window):
     # Perform simulation (find time only) on the given parameters
     def clickedTime():
         try:
-            vals = []
+            currType = graphOptionVal.get()
             vals = [int(entry.get()) for entry in entrySpace]
+            m, k, n, f, s, r, rows, cols, num_hubs = vals
             clickedLabel.configure(text=timeTextPre)
-            time = simulation.simulate(*vals)
+            time = simulation.simulate(m, k, n, f, s, r, graph_type = currType, rows = rows, cols = cols, num_hubs=num_hubs)
             clickedLabel.configure(text=timeTextPost + str(time))
         except Exception as error:
             clickedLabel.configure(text=traceback.format_exc())
@@ -101,26 +103,33 @@ def loadSimPage(window):
         graphText = "Simulate on " + currType + " graph"
         graphLabel.configure(text=graphText)
         if currType == "Euclidean":
+            entrySpace[indOfEuc-1].config(state=DISABLED, bg="gray")
             entrySpace[indOfEuc].config(state=NORMAL, bg="white")
             entrySpace[indOfEuc+1].config(state=NORMAL, bg="white")
             entrySpace[indOfHub].config(state=DISABLED, bg="gray")
         elif currType == "Regular":
+            entrySpace[indOfEuc-1].config(state=NORMAL, bg="white")
             entrySpace[indOfEuc].config(state=DISABLED, bg="gray")
             entrySpace[indOfEuc+1].config(state=DISABLED, bg="gray")
             entrySpace[indOfHub].config(state=DISABLED, bg="gray")
         elif currType == "Network":
-            print("Option not supported yet\n")
-            showwarning("Error", "Network graphs not supported yet :(")
-            graphOptionVal.set(currType)
-        else:
-            print("Unknown graph selected\n")
-            showerror("Error", "Graph selection error")
+            entrySpace[indOfEuc-1].config(state=DISABLED, bg="gray")
+            entrySpace[indOfEuc].config(state=DISABLED, bg="gray")
+            entrySpace[indOfEuc+1].config(state=DISABLED, bg="gray")
+            entrySpace[indOfHub].config(state=NORMAL, bg="white")
+            # print("Option not supported yet\n")
+            # showwarning("Error", "Network graphs not supported yet :(")
+        # else:
+        #     print("Unknown graph selected\n")
+        #     showerror("Error", "Graph selection error")
+        graphOptionVal.set(currType)
 
 
     # Option to toggle between graphs
     i += 1
     graphTypes = ["Regular",
-                  "Euclidean"]
+                  "Euclidean",
+                  "Network"]
     currType = graphTypes[0]
     # Black out Euclidean parameters
     entrySpace[indOfEuc].config(state=DISABLED, bg="gray")

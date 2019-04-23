@@ -3,29 +3,40 @@ import simulation
 import traceback
 from functools import partial
 
+# TODO
+# Add dropdown for either 1. regular 2. Euclidean (need rows/cols)
+
 # Page that allows for simulating/animating graph given parameters
 def loadSimPage(window):
     # Clear
     clearWindow(window)
 
     # Prompt to enter parameters
-    lbl = Label(window, text="Enter parameters")
+    explainWidth=50
+    lbl = Label(window, text="Enter parameters below")
     i = 0
     lbl.grid(column=0, row=i)
 
-    explainWidth=50
     explainLbl = Label(window, width=explainWidth, text="What are these?", anchor="w")
     explainLbl.grid(column=2, row=i)
 
     # Parameters and default values
-    paramArr = ["m", "k", "n", "f", "s", "r"]
-    defVals = [10, 5, 10, 20, 30, 10]
+    paramArr = ["m", "k", "n", "f", "s", "r", # parameters shared among all graphs
+                "r", "c", # parameters present in only Euclidean
+                "h" # parameters present in only network graph
+                ]
+    indOfEuc = 6
+    indOfHub = 8
+    defVals = [10, 5, 10, 20, 30, 10, 1, 1, 1]
     textArr = ["Message length",
                "Number of blocks to break into",
                "Size of codeword",
                "Number of friends on graph that may hold blocks",
                "Size/number of nodes on graph",
-               "Degree of each node (exact number of neighbors of each node)"]
+               "Degree of each node (exact number of neighbors of each node)",
+               "Number of rows (only in Euclidean graphs)",
+               "Number of columns (only in Euclidean graphs)",
+               "Number of hubs (only in network graphs)"]
 
     # Set up area to enter info
     entrySpace = []
@@ -80,7 +91,89 @@ def loadSimPage(window):
         except Exception as error:
             clickedLabel.configure(text=traceback.format_exc())
 
+    def updateTests(*args):
+        nTests=dropDownVal.get()
+        nTestsText = "Will run " + str(nTests) + " tests"
+        confirmLabel.configure(text=nTestsText)
+
+    def updateGraphType(*args):
+        currType = graphOptionVal.get()
+        graphText = "Simulate on " + currType + " graph"
+        graphLabel.configure(text=graphText)
+        if currType == "Euclidean":
+            entrySpace[indOfEuc].config(state=NORMAL, bg="white")
+            entrySpace[indOfEuc+1].config(state=NORMAL, bg="white")
+            entrySpace[indOfHub].config(state=DISABLED, bg="gray")
+        elif currType == "Regular":
+            entrySpace[indOfEuc].config(state=DISABLED, bg="gray")
+            entrySpace[indOfEuc+1].config(state=DISABLED, bg="gray")
+            entrySpace[indOfHub].config(state=DISABLED, bg="gray")
+        elif currType == "Network":
+            print("Option not supported yet\n")
+            showwarning("Error", "Network graphs not supported yet :(")
+            graphOptionVal.set(currType)
+        else:
+            print("Unknown graph selected\n")
+            showerror("Error", "Graph selection error")
+
+
+    # Option to toggle between graphs
+    i += 1
+    graphTypes = ["Regular",
+                  "Euclidean"]
+    currType = graphTypes[0]
+    # Black out Euclidean parameters
+    entrySpace[indOfEuc].config(state=DISABLED, bg="gray")
+    entrySpace[indOfEuc+1].config(state=DISABLED, bg="gray")
+    # Black out Network parameters
+    entrySpace[indOfHub].config(state=DISABLED, bg="gray")
+
+    graphText = "Simulate on " + currType + " graph"
+    graphLabel = Label(window, text=graphText)
+
+    graphOptionVal = StringVar(window)
+    graphOptionVal.set(currType)
+    graphOptionLabel = Label(window, text="Choose type of graph")
+    graphOptionLabel.grid(column=0, row=i)
+
+    graphOptions = OptionMenu(window, graphOptionVal, *graphTypes,\
+                              command=updateGraphType)
+    graphOptions.grid(column=1, row=i)
+
+    # Option to determine number of tests to run
+    i += 1
+    nTests = 1
+    nTestsText="Will run " + str(nTests) + " tests"
+    maxTests = 10
+    testArr = range(1, maxTests, 1)
+    confirmLabel = Label(window, text=nTestsText)
+
+    dropDownVal = IntVar(window)
+    dropDownVal.set(nTests)
+    testOptionLabel = Label(window, text="Choose number of tests...")
+    testOptionLabel.grid(column=0, row=i)
+
+    testOptions = OptionMenu(window, dropDownVal, *testArr,\
+                             command=updateTests)
+    testOptions.grid(column=1, row=i)
+
+    # Option to determine range of values
+
+    # Confirmation label to summarize the results to test
+    i += 1
+    summaryLabel = Label(window, text="Summary of inputs")
+    summaryLabel.grid(column=0, row=i)
+
+    # Show number of tests to run
+    i += 1
+    confirmLabel.grid(column=0, row=i)
+
+    # Show type of graph
+    i += 1
+    graphLabel.grid(column=0, row=i)
+
     # Buttons for animation and simulation
+    i += 1
     animBtn = Button(window, text="Run Animation", command=clickedAnimation)
     animBtn.grid(column=0, row=i)
 
@@ -135,7 +228,7 @@ if __name__ == "__main__":
     # Set up window for simulation
     window = Tk()
     window.title("GUI Simulator")
-    windowDim = "900x400"
+    windowDim = "900x600"
     window.geometry(windowDim)
     # Load title page initially
     loadTitlePage(window)

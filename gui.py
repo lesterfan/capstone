@@ -27,27 +27,28 @@ def loadSimPage(window):
                 ]
     indOfEuc = 6
     indOfHub = 8
-    defVals = [10, 5, 10, 20, 30, 10, 1, 1, 1]
+    defVals = [10, 5, 10, 20, 30, 10, 1, 1, 4]
     textArr = ["Message length",
                "Number of message bits in each block",
                "Size of codeword after adding redundancy",
                "Number of friends on graph that may hold bits",
                "Size/number of nodes on graph",
-               "Degree of each node (only in Regular graphs)",
-               "Number of rows (only in Euclidean graphs)",
-               "Number of columns (only in Euclidean graphs)",
-               "Number of hubs (only in Network graphs)"]
+               "Degree of each node",
+               "Number of rows",
+               "Number of columns",
+               "Number of hubs"]
 
     # Set up area to enter info
     entrySpace = []
     entryLabels = []
     explainLabels = []
     i += 1
+    labelWidth = 10
     entryWidth = 10
     count = 0
 
     for p in paramArr:
-        entryLabel = Label(window, text=p + ": ")
+        entryLabel = Label(window, width=labelWidth, text=p + ": ")
         entryLabel.grid(column=0, row=i)
         currEntry = Entry(window, width=entryWidth)
         currEntry.insert(END, defVals[count])
@@ -62,8 +63,10 @@ def loadSimPage(window):
         explainLabels.append(explainLabel)
 
     # clickedLabel - displays results
-    clickedLabel = Label(window,
+    clickedLabel = Message(window, width=200, anchor="w",
                          text="Default values provided- either run animation or find the time taken to simulate")
+    # clickedLabel = Label(window, width=explainWidth,
+                         # text="Default values provided- either run animation or find the time taken to simulate")
     animTextPre = "Running animation on the given parameters..."
     animTextPost = "Running animation on parameters- check other window"
     timeTextPre = "Finding the time taken on the given parameters..."
@@ -73,8 +76,31 @@ def loadSimPage(window):
     def clickedAnimation():
         try:
             currType = graphOptionVal.get()
-            vals = [int(entry.get()) for entry in entrySpace]
+            vals = []
+            for entry in entrySpace:
+                if (not entry.get().isdigit() or int(entry.get())<=0):
+                    clickedLabel.configure(text="Error: all entries must be positive integers!")
+                    return
+                vals.append(int(entry.get()))
             m, k, n, f, s, r, rows, cols, num_hubs = vals
+            if (k > m):
+                clickedLabel.configure(text="Error: k cannot be greater than m! You can't split the message into more blocks than its length.")
+                return
+            if (k > n):
+                clickedLabel.configure(text="Error: n cannot be less than k! You need to encode into more blocks than you started with.")
+                return
+            if (n > f):
+                clickedLabel.configure(text="Error: f cannot be less than n! You need at least n relays to hold your code blocks.")
+                return
+            if (currType != "Euclidean" and f > s):
+                clickedLabel.configure(text="Error: s cannot be less than f! You need to fit all of the relays on the graph.")
+                return
+            if (currType == "Euclidean" and rows*cols > s):
+                clickedLabel.configure(text="Error: rows*cols cannot be less than f! You need to fit all of the relays on the graph.")
+                return
+            if (currType == "Network" and num_hubs < 4):
+                clickedLabel.configure(text="Error: number of hubs must be greater than 3!")
+                return
             clickedLabel.configure(text=animTextPre)
             simulation.animate(m, k, n, f, s, r, graph_type = currType, rows = rows, cols = cols, num_hubs=num_hubs)
             clickedLabel.configure(text=animTextPost)
@@ -121,9 +147,6 @@ def loadSimPage(window):
             updateVisibility([1,1,0,0,1])
         elif currType == "Network":
             updateVisibility([0,0,0,0,1])
-        # else:
-        #     print("Unknown graph selected\n")
-        #     showerror("Error", "Graph selection error")
         graphOptionVal.set(currType)
 
 
@@ -189,7 +212,7 @@ def loadSimPage(window):
 
     # Display clickedLabel after buttons
     i += 1
-    clickedLabel.grid(column=0, row=i)
+    clickedLabel.grid(column=2, row=i)
 
     # Navigate back to title
     i += 1

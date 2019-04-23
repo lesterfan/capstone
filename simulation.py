@@ -29,13 +29,13 @@ class Simulation:
         if graph_type == "Regular":
             self.G = self.make_reg_graph(f, s, r)
         elif graph_type == "Euclidean":
-            assert(s == rows * cols)
+            s = rows * cols
             self.G = nx.grid_2d_graph(rows, cols)
         elif graph_type == "Network":
             assert( num_hubs > 0 )
             # sequence = nx.generators.degree_seq.create_degree_sequence(s, nx.utils.powerlaw_sequence)
             # self.G = nx.configuration_model(sequence)
-            assert( (3 * s) // num_hubs < s )
+            assert( num_hubs > 3 )
             # Check all combinations of feasible degrees to see if we can make a valid graph
             hub_degrees = range( (2 * s) // num_hubs, (3 * s) // num_hubs )
             non_hub_degrees = range( 1, 4 )

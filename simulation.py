@@ -9,7 +9,7 @@ import copy
 import player
 
 class Simulation:
-    def __init__(self, f, s, r):
+    def __init__(self, f, s, r, graph_type = "regular", rows = 5, cols = 5):
         self.G = None
         self.F = set([])
         self.owners_list = []
@@ -23,13 +23,19 @@ class Simulation:
         self.f = f
         self.s = s
         self.r = r
-        self.make_reg_graph(f, s, r)
+        self.graph_type = graph_type
+        if graph_type == "regular":
+            self.G = self.make_reg_graph(f, s, r)
+        elif graph_type == "euclidean":
+            assert(s == rows * cols)
+            self.G = nx.grid_2d_graph(rows, cols)
+        self.F = set(random.sample(self.G.nodes, f))
 
     def make_reg_graph(self, f, s, r):
-        self.G = nx.random_regular_graph(r, s)
-        while not nx.is_connected(self.G):
-            self.G = nx.random_regular_graph(r, s)
-        self.F = set(random.sample(range(s), f))
+        G = nx.random_regular_graph(r, s)
+        while not nx.is_connected(G):
+            G = nx.random_regular_graph(r, s)
+        return G
 
     def simulate_once(self, k, n, batch_num = 1):
         """
@@ -43,7 +49,7 @@ class Simulation:
         # Disseminate
         time_elapsed = 0
         num_distributed = 0
-        curr_index = random.randint(0, self.s - 1)
+        curr_index = random.choice(list(self.G.nodes))
         while num_distributed < n:
             if curr_index in self.F and curr_index not in bit_owners:
                 num_distributed += 1
@@ -55,7 +61,7 @@ class Simulation:
             curr_index = random.choice(list(self.G.adj[curr_index]))
         # Collect
         num_collected = 0
-        curr_index = random.randint(0, self.s - 1)
+        curr_index = random.choice(list(self.G.nodes))
         while num_collected < k:
             if curr_index in bit_owners:
                 num_collected += 1
@@ -80,7 +86,10 @@ class Simulation:
 
     def animate(self, m, k, n, repeat):
         self.fig, self.ax = plt.subplots()
-        self.pos = nx.circular_layout(self.G)
+        if self.graph_type == "regular":
+            self.pos = nx.circular_layout(self.G)
+        elif self.graph_type == "euclidean":
+            self.pos = nx.spectral_layout(self.G)
         self.ani_title = f'k = {k}, n = {n}, f = {self.f}, s = {self.s}, m = {m}, r = {self.r}'
         update_func = self.canvas_update_closure()
         # self.ani = matplotlib.animation.FuncAnimation(self.fig, update_func, frames=len(self.owners_list), interval=update_interval, repeat=repeat)
@@ -138,8 +147,8 @@ def simulate(m, k, n, f, s, r):
     simul = Simulation(f, s, r)
     return simul.simulate(m, k, n)
 
-def animate(m, k, n, f, s, r, repeat = False):
-    simul = Simulation(f, s, r)
+def animate(m, k, n, f, s, r, repeat = False, graph_type = "regular", rows = 0, cols = 0):
+    simul = Simulation(f, s, r, graph_type = graph_type, rows = rows, cols = cols)
     simul.simulate(m, k, n)
     p = Process(target=simul.animate, args=(m, k, n, repeat))
     p.start()
@@ -166,6 +175,18 @@ def run_animation():
     r = 10
     animate(m, k, n, f, s, r)
 
+def run_animation_euclidean():
+    k = 5
+    n = 10
+    m = 10
+    f = 20
+    s = 25
+    r = 10
+    graph_type = "euclidean"
+    rows = 5
+    cols = 5
+    animate(m, k, n, f, s, r, graph_type=graph_type, rows=rows, cols=cols)
+
 def run_animations():
     ks = [5, 10]
     ns = [10, 14]
@@ -179,5 +200,6 @@ def run_animations():
 
 if __name__ == "__main__":
     # run_sims()
-    run_animation()
+    # run_animation()
+    run_animation_euclidean()
     # run_animations()

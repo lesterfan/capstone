@@ -6,12 +6,14 @@ import matplotlib.animation
 import matplotlib.markers as mrks
 import random
 import copy
+import player
 
 class Simulation:
     def __init__(self, f, s, r):
         self.G = None
         self.F = set([])
         self.owners_list = []
+        self.collected = []
         self.path = []
         self.batch_nums = []
         self.fig, self.pos, self.ax = None, None, None
@@ -76,12 +78,19 @@ class Simulation:
         self.num_times = m // k
         return sum([self.simulate_once(k, n, batch_num=i + 1) for i in range(self.num_times)])
 
-    def animate(self, m, k, n, update_interval, repeat):
+    def animate(self, m, k, n, repeat):
         self.fig, self.ax = plt.subplots()
         self.pos = nx.circular_layout(self.G)
         self.ani_title = f'k = {k}, n = {n}, f = {self.f}, s = {self.s}, m = {m}, r = {self.r}'
         update_func = self.canvas_update_closure()
-        self.ani = matplotlib.animation.FuncAnimation(self.fig, update_func, frames=len(self.owners_list), interval=update_interval, repeat=repeat)
+        # self.ani = matplotlib.animation.FuncAnimation(self.fig, update_func, frames=len(self.owners_list), interval=update_interval, repeat=repeat)
+        self.ani = player.Player(
+            self.fig, 
+            update_func, 
+            frames=len(self.owners_list), 
+            repeat=repeat,
+            maxi = len(self.owners_list) - 1
+        )
         figManager = plt.get_current_fig_manager()
         figManager.window.showMaximized()
         plt.show()
@@ -96,10 +105,17 @@ class Simulation:
             owner_color = "red"
             disseminate_color = "blue"
             collect_color = "purple"
+            collected_color = "orange"
             path_color = disseminate_color if stage == "disseminate" else collect_color
-            handles = [Line2D([0], [0], color=color, lw=4) for color in (reg_color, friend_color, owner_color, disseminate_color, collect_color)]
-            labels = ["Other", "Friends", "Bit Owners", "Disseminator", "Collector"]
+            handles = [Line2D([0], [0], color=color, lw=4) for color in (reg_color, friend_color, owner_color, collected_color, disseminate_color, collect_color)]
+            labels = ["Other", "Friends", "Bit Owners", "Collected Bits", "Disseminator", "Collector"]
             other_nodes = set(self.G.nodes()) - set(self.F)
+            if prev_stage == "collect" and stage == "disseminate":
+                self.collected = []
+            if i >= 1:
+                prev_owners = self.owners_list[i - 1]
+                if curr_node not in curr_owners and curr_node in prev_owners:
+                    self.collected.append(curr_node)
             self.ax.clear()
             nx.draw_networkx_edges(self.G, pos=self.pos, edge_color="black", ax=self.ax)
             if prev_stage == stage and prev_node is not None:
@@ -107,6 +123,7 @@ class Simulation:
             nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=other_nodes, node_color=reg_color, ax=self.ax, linewidths=1.5, edgecolors="black")
             nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=self.F, node_color=friend_color, ax=self.ax)
             nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=curr_owners, node_color=owner_color, ax=self.ax)
+            nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=self.collected, node_color=collected_color, ax=self.ax)
             nx.draw_networkx_nodes(self.G, pos=self.pos, nodelist=[curr_node], node_color=path_color, ax=self.ax)
             plt.axis('off')
             self.ax.set_title(self.ani_title + f' (batch {self.batch_nums[i]}/{self.num_times}, t = {i + 1})')
@@ -121,11 +138,12 @@ def simulate(m, k, n, f, s, r):
     simul = Simulation(f, s, r)
     return simul.simulate(m, k, n)
 
-def animate(m, k, n, f, s, r, update_interval = 1000, repeat = False):
+def animate(m, k, n, f, s, r, repeat = False):
     simul = Simulation(f, s, r)
     simul.simulate(m, k, n)
-    p = Process(target=simul.animate, args=(m, k, n, update_interval, repeat))
+    p = Process(target=simul.animate, args=(m, k, n, repeat))
     p.start()
+    # simul.animate(m, k, n, repeat)
 
 def run_sims():
     ks = [5, 10, 10, 10, 9, 11]

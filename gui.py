@@ -13,26 +13,42 @@ def loadSimPage(window):
     i = 0
     lbl.grid(column=0, row=i)
 
-    # Paramters and default values
+    explainWidth=50
+    explainLbl = Label(window, width=explainWidth, text="What are these?", anchor="w")
+    explainLbl.grid(column=2, row=i)
+
+    # Parameters and default values
     paramArr = ["m", "k", "n", "f", "s", "r"]
     defVals = [10, 5, 10, 20, 30, 10]
+    textArr = ["Message length",
+               "Number of blocks to break into",
+               "Size of codeword",
+               "Number of friends on graph that may hold blocks",
+               "Size/number of nodes on graph",
+               "Degree of each node (exact number of neighbors of each node)"]
 
     # Set up area to enter info
     entrySpace = []
     entryLabels = []
+    explainLabels = []
     i += 1
-    setWidth = 10
+    entryWidth = 10
     count = 0
+
     for p in paramArr:
         entryLabel = Label(window, text=p + ": ")
         entryLabel.grid(column=0, row=i)
-        currEntry = Entry(window, width=setWidth)
+        currEntry = Entry(window, width=entryWidth)
         currEntry.insert(END, defVals[count])
         currEntry.grid(column=1, row=i)
+        explainLabel = Label(window, text=textArr[count], width=explainWidth, anchor="w")
+        explainLabel.grid(column=2, row=i)
+
         i += 1
         count += 1
         entrySpace.append(currEntry)
         entryLabels.append(entryLabel)
+        explainLabels.append(explainLabel)
 
     # clickedLabel - displays results
     clickedLabel = Label(window,
@@ -77,7 +93,7 @@ def loadSimPage(window):
 
     # Navigate back to title
     i += 1
-    titleBtn = Button(window, text ="Back to title page", command=partial(loadTitlePage, window))
+    titleBtn = Button(window, text="Back to title page", command=partial(loadTitlePage, window))
     titleBtn.grid(column=0, row=i)
 
     window.mainloop()
@@ -96,36 +112,8 @@ def loadTitlePage(window):
     # Buttons to navigate to other pages
     i += 1
 
-    explainBtn = Button(window, text="Overview of parameters/project", command=partial(loadExplainPage, window))
     simBtn = Button(window, text="Try simulation", command=partial(loadSimPage, window))
-    explainBtn.grid(column=0, row=i)
-    simBtn.grid(column=1, row=i)
-
-    window.mainloop()
-
-# Load explanation page
-def loadExplainPage(window):
-    # Clear
-    clearWindow(window)
-
-    # Provide explanation title page here
-    toptext="Explanation of parameters and project"
-    topLbl=Label(window, text=toptext)
-    i = 0
-    topLbl.grid(column=0, row=i)
-
-    # Body of explanation here
-    i += 1
-    mainText="Update text here with formatting"
-    mainLbl=Label(window, text=mainText)
-    mainLbl.grid(column=0, row=i)
-
-    # Buttons to navigate to other pages
-    i += 1
-    titleBtn = Button(window, text="Back to title", command=partial(loadTitlePage, window))
-    simBtn = Button(window, text="Try simulation", command=partial(loadSimPage, window))
-    titleBtn.grid(column=0, row=i)
-    simBtn.grid(column=1, row=i)
+    simBtn.grid(column=0, row=i)
 
     window.mainloop()
 
@@ -147,7 +135,7 @@ if __name__ == "__main__":
     # Set up window for simulation
     window = Tk()
     window.title("GUI Simulator")
-    windowDim = "700x400"
+    windowDim = "900x400"
     window.geometry(windowDim)
     # Load title page initially
     loadTitlePage(window)

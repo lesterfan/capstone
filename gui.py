@@ -98,27 +98,29 @@ def loadSimPage(window):
         nTestsText = "Will run " + str(nTests) + " tests"
         confirmLabel.configure(text=nTestsText)
 
+    def updateVisibility(A):
+        k = 0
+        for index in [indOfEuc-2,indOfEuc-1,indOfEuc,indOfEuc+1,indOfHub]:
+            if (A[k] == 0):
+                entryLabels[index].grid_forget()
+                entrySpace[index].grid_forget()
+                explainLabels[index].grid_forget()
+            else:
+                entryLabels[index].grid(column=0, row=index+1)
+                entrySpace[index].grid(column=1, row=index+1)
+                explainLabels[index].grid(column=2, row=index+1)
+            k = k+1
+    
     def updateGraphType(*args):
         currType = graphOptionVal.get()
         graphText = "Simulate on " + currType + " graph"
         graphLabel.configure(text=graphText)
         if currType == "Euclidean":
-            entrySpace[indOfEuc-1].config(state=DISABLED, bg="gray")
-            entrySpace[indOfEuc].config(state=NORMAL, bg="white")
-            entrySpace[indOfEuc+1].config(state=NORMAL, bg="white")
-            entrySpace[indOfHub].config(state=DISABLED, bg="gray")
+            updateVisibility([0,0,1,1,0])
         elif currType == "Regular":
-            entrySpace[indOfEuc-1].config(state=NORMAL, bg="white")
-            entrySpace[indOfEuc].config(state=DISABLED, bg="gray")
-            entrySpace[indOfEuc+1].config(state=DISABLED, bg="gray")
-            entrySpace[indOfHub].config(state=DISABLED, bg="gray")
+            updateVisibility([1,1,0,0,1])
         elif currType == "Network":
-            entrySpace[indOfEuc-1].config(state=DISABLED, bg="gray")
-            entrySpace[indOfEuc].config(state=DISABLED, bg="gray")
-            entrySpace[indOfEuc+1].config(state=DISABLED, bg="gray")
-            entrySpace[indOfHub].config(state=NORMAL, bg="white")
-            # print("Option not supported yet\n")
-            # showwarning("Error", "Network graphs not supported yet :(")
+            updateVisibility([0,0,0,0,1])
         # else:
         #     print("Unknown graph selected\n")
         #     showerror("Error", "Graph selection error")
@@ -131,11 +133,7 @@ def loadSimPage(window):
                   "Euclidean",
                   "Network"]
     currType = graphTypes[0]
-    # Black out Euclidean parameters
-    entrySpace[indOfEuc].config(state=DISABLED, bg="gray")
-    entrySpace[indOfEuc+1].config(state=DISABLED, bg="gray")
-    # Black out Network parameters
-    entrySpace[indOfHub].config(state=DISABLED, bg="gray")
+    updateVisibility([1,1,0,0,0])
 
     graphText = "Simulate on " + currType + " graph"
     graphLabel = Label(window, text=graphText)

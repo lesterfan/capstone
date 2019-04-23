@@ -6,10 +6,11 @@ import matplotlib.animation
 import matplotlib.markers as mrks
 import random
 import copy
+import itertools
 import player
 
 class Simulation:
-    def __init__(self, f, s, r, graph_type = "regular", rows = 5, cols = 5):
+    def __init__(self, f, s, r, graph_type = "regular", rows = -1, cols = -1, num_hubs = -1):
         self.G = None
         self.F = set([])
         self.owners_list = []
@@ -24,11 +25,28 @@ class Simulation:
         self.s = s
         self.r = r
         self.graph_type = graph_type
+        self.num_hubs = num_hubs
         if graph_type == "regular":
             self.G = self.make_reg_graph(f, s, r)
         elif graph_type == "euclidean":
             assert(s == rows * cols)
             self.G = nx.grid_2d_graph(rows, cols)
+        elif graph_type == "network":
+            assert( num_hubs > 0 )
+            # sequence = nx.generators.degree_seq.create_degree_sequence(s, nx.utils.powerlaw_sequence)
+            # self.G = nx.configuration_model(sequence)
+            assert( (3 * s) // num_hubs < s )
+            # Check all combinations of feasible degrees to see if we can make a valid graph
+            hub_degrees = range( (2 * s) // num_hubs, (3 * s) // num_hubs )
+            non_hub_degrees = range( 1, 4 )
+            for degree_seq in itertools.product( *[hub_degrees for _ in range(num_hubs)], *[non_hub_degrees for _ in range(s - num_hubs)] ):
+                if sum(degree_seq) % 2 != 0:
+                    continue
+                G_curr = nx.configuration_model(degree_seq)
+                if nx.is_connected(G_curr):
+                    self.G = G_curr
+                    break
+            assert( self.G != None )
         self.F = set(random.sample(self.G.nodes, f))
 
     def make_reg_graph(self, f, s, r):
@@ -39,7 +57,7 @@ class Simulation:
 
     def simulate_once(self, k, n, batch_num = 1):
         """
-        Simulates the communication of a single block of n code bits made into k
+        Simulates the communication of a single block of k code bits made into n
         message bits through redundancy. This is done on an r-regular graph of size
         s, in which we have f friends that act as people to which we can possibly send
         a message.
@@ -76,7 +94,7 @@ class Simulation:
     def simulate(self, m, k, n):
         """
         Simulates the communication of a message of size m through sending
-        blocks of n code bits made into k
+        blocks of k code bits made into n
         message bits through redundancy. This is done on an r-regular graph of size
         s, in which we have f friends to which we can possibly send a message.
         """
@@ -90,6 +108,8 @@ class Simulation:
             self.pos = nx.circular_layout(self.G)
         elif self.graph_type == "euclidean":
             self.pos = nx.spectral_layout(self.G)
+        elif self.graph_type == "network":
+            self.pos = nx.spring_layout(self.G)
         self.ani_title = f'k = {k}, n = {n}, f = {self.f}, s = {self.s}, m = {m}, r = {self.r}'
         update_func = self.canvas_update_closure()
         # self.ani = matplotlib.animation.FuncAnimation(self.fig, update_func, frames=len(self.owners_list), interval=update_interval, repeat=repeat)
@@ -139,16 +159,16 @@ class Simulation:
             self.ax.legend(handles, labels)
         return closure
     
-def simulate_once(self, k, n, f, s, r):
-    simul = Simulation(f, s, r)
+def simulate_once(self, k, n, f, s, r, graph_type = "regular", rows = 0, cols = 0, num_hubs = -1):
+    simul = Simulation(f, s, r, graph_type = graph_type, rows = rows, cols = cols, num_hubs = num_hubs)
     return simul.simulate_once(k, n)
 
-def simulate(m, k, n, f, s, r):
-    simul = Simulation(f, s, r)
+def simulate(m, k, n, f, s, r, graph_type = "regular", rows = 0, cols = 0, num_hubs = -1):
+    simul = Simulation(f, s, r, graph_type = graph_type, rows = rows, cols = cols, num_hubs = num_hubs)
     return simul.simulate(m, k, n)
 
-def animate(m, k, n, f, s, r, repeat = False, graph_type = "regular", rows = 0, cols = 0):
-    simul = Simulation(f, s, r, graph_type = graph_type, rows = rows, cols = cols)
+def animate(m, k, n, f, s, r, repeat = False, graph_type = "regular", rows = 0, cols = 0, num_hubs = -1):
+    simul = Simulation(f, s, r, graph_type = graph_type, rows = rows, cols = cols, num_hubs=num_hubs)
     simul.simulate(m, k, n)
     p = Process(target=simul.animate, args=(m, k, n, repeat))
     p.start()
@@ -187,6 +207,17 @@ def run_animation_euclidean():
     cols = 5
     animate(m, k, n, f, s, r, graph_type=graph_type, rows=rows, cols=cols)
 
+def run_animation_network():
+    k = 5
+    n = 10
+    m = 10
+    f = 20
+    s = 25
+    r = 10
+    graph_type = "network"
+    num_hubs = 4
+    animate(m, k, n, f, s, r, graph_type=graph_type, num_hubs=num_hubs)
+
 def run_animations():
     ks = [5, 10]
     ns = [10, 14]
@@ -201,5 +232,6 @@ def run_animations():
 if __name__ == "__main__":
     # run_sims()
     # run_animation()
-    run_animation_euclidean()
+    # run_animation_euclidean()
+    run_animation_network()
     # run_animations()

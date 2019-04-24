@@ -29,7 +29,7 @@ class Simulation:
         if graph_type == "Regular":
             self.G = self.make_reg_graph(f, s, r)
         elif graph_type == "Euclidean":
-            s = rows * cols
+            self.s = rows * cols
             self.G = nx.grid_2d_graph(rows, cols)
         elif graph_type == "Network":
             assert( num_hubs > 0 )

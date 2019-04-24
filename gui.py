@@ -417,10 +417,10 @@ def loadSimPage(window):
     graphLabel.grid(column=centerCol, row=i)
 
     # Also provide further explanation/notes here
-    i += 1
-    etcLabel = Message(window, width=400, text="More detailed summary may be found by clicking either\n"
-                                               "'run time' or 'animate'\n")
-    etcLabel.grid(column=centerCol, row=i)
+    #i += 1
+    #etcLabel = Message(window, width=400, text="More detailed summary may be found by clicking either\n"
+    #                                           "'run time' or 'animate'\n")
+    #etcLabel.grid(column=centerCol, row=i)
 
     # Buttons for animation and simulation
     i += 1

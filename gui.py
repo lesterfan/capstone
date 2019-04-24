@@ -345,9 +345,9 @@ def loadSimPage(window):
                 entrySpace[index].grid_forget()
                 explainLabels[index].grid_forget()
             else:
-                entryLabels[index].grid(column=0, row=5+cnt)
-                entrySpace[index].grid(column=1, row=5+cnt)
-                explainLabels[index].grid(column=2, row=5+cnt)
+                entryLabels[index].grid(column=0, row=6+cnt)
+                entrySpace[index].grid(column=1, row=6+cnt)
+                explainLabels[index].grid(column=2, row=6+cnt)
                 cnt = cnt+1
             k = k+1
     

@@ -1,20 +1,54 @@
 from tkinter import *
+from tkinter import messagebox
 import simulation
 import traceback
 from functools import partial
 
 # TODO
-# Add dropdown for either 1. regular 2. Euclidean (need rows/cols)
+# 1. Implement range-based testing
+# 2. Mutliple testing feature
+# 3. Given parameters, output all results of a test in a tabulated second window/file
+
+def printMessageBox(enteredParams, graphType, numberOfTests):
+    simTextBody = ""
+    currCount = 0
+    currTests = 1
+    params = ["m", "k", "n", "f", "s", "r", # parameters shared among all graphs
+                "rows", "cols", # parameters present in only Euclidean
+                "num_hubs" # parameters present in only network graph
+                ]
+    nParams = len(params)
+    for p in params:
+        # update logic if not correct
+        if( (graphType == "Regular" and p != "rows" and p != "cols" and p != "num_hubs")
+                or (graphType == "Euclidean" and p != "r" and p != "num_hubs")
+                or (graphType == "Network" and p != "r" and p != "rows" and p != "cols")):
+            simTextBody += p + ": " + \
+                str(enteredParams[currCount]) + \
+                " to " + \
+                str(enteredParams[currCount + nParams]) + \
+                " inclusive \n"
+        currTests *= (enteredParams[currCount + nParams] - enteredParams[currCount] + 1)
+        currCount += 1
+
+    simTextBody += "Graph type: " + graphType + "\n"
+    simTextBody += "Number of tests for each fixed parameter: " + str(numberOfTests) + "\n"
+    simTextBody += "Number of tests to be performed in total: " + str(numberOfTests * currTests)
+    messagebox.showinfo("Final simulation input", simTextBody)
 
 # Page that allows for simulating/animating graph given parameters
 def loadSimPage(window):
-    # Clear
-    clearWindow(window)
+    centerCol = 1
+    # Title
+    titletext = "Fast, Covert, and Robust Exchange of Messages on a Graph - Simulator"
+    titleMessage = Message(window, width=400, text=titletext)
+    i = 0
+    titleMessage.grid(column=0, row=i)
 
     # Prompt to enter parameters
     explainWidth=50
     lbl = Label(window, text="Enter parameters below")
-    i = 0
+    i += 1
     lbl.grid(column=0, row=i)
 
     explainLbl = Label(window, width=explainWidth, text="What are these?", anchor="w")
@@ -25,6 +59,7 @@ def loadSimPage(window):
                 "rows", "cols", # parameters present in only Euclidean
                 "num_hubs" # parameters present in only network graph
                 ]
+    nParams = len(paramArr)
     indOfEuc = 6
     indOfHub = 8
     defVals = [10, 5, 10, 20, 30, 10, 1, 1, 4]
@@ -47,6 +82,13 @@ def loadSimPage(window):
     entryWidth = 10
     count = 0
 
+    # When the user presses return, clicks on another entry object, or their mouse leaves
+    # the widget, perform the callback
+    def bindEntryTo(entryInst, funcCallback):
+        entryInst.bind('<Return>', (lambda _: funcCallback()))
+        entryInst.bind('<FocusOut>', (lambda _: funcCallback()))
+        entryInst.bind('<Leave>', (lambda _: funcCallback()))
+
     for p in paramArr:
         entryLabel = Label(window, width=labelWidth, text=p + ": ")
         entryLabel.grid(column=0, row=i)
@@ -65,42 +107,84 @@ def loadSimPage(window):
     # clickedLabel - displays results
     clickedLabel = Message(window, width=200, anchor="w",
                          text="Default values provided- either run animation or find the time taken to simulate")
-    # clickedLabel = Label(window, width=explainWidth,
-                         # text="Default values provided- either run animation or find the time taken to simulate")
     animTextPre = "Running animation on the given parameters..."
     animTextPost = "Running animation on parameters- check other window"
     timeTextPre = "Finding the time taken on the given parameters..."
     timeTextPost = "Time required to run simulation on given parameters: "
 
+    # validate all parameters and output corresponding error message instead of traceback
+    # return the array of inputs; break the corresponding ranges as necessary
+    def validateEntries():
+        paramsToInt=list(range(nParams * 2))
+        j = 0
+        for entry in entrySpace:
+            posOfColon = entry.get().find(":")
+            if entry.get().isdigit() and int(entry.get()) > 0:
+                paramsToInt[j] = int(entry.get())
+                paramsToInt[j + nParams] = int(entry.get())
+            elif posOfColon != -1:
+                s1 = entry.get()[0:posOfColon]
+                s2 = entry.get()[posOfColon + 1: len(entry.get())]
+                if( (not s1.isdigit() or int(s1) <= 0) or (not s2.isdigit() or int(s2) <= 0)):
+                    clickedLabel.configure(text="Error for parameter "\
+                                                + paramArr[j] + " usage for range based detection")
+                    return []
+                elif int(s2) < int(s1):
+                    clickedLabel.configure(text="Error for parameter " + paramArr[j] +\
+                                                ": The second parameter must be larger than the first!")
+                    return []
+                paramsToInt[j] = int(s1)
+                paramsToInt[j + nParams] = int(s2)
+            else:
+                clickedLabel.configure(text="Invalid parameter input detected- either not positive or incorrect range-based usage")
+                return []
+            j += 1
+        return paramsToInt
+
+    # Proceed to simulation with the given parameters m, k, n, f, s, r, ... and type of graph
+    # Update output label as needed
+    def validateParams(m, k, n, f, s, r, rows, cols, num_hubs, currType,
+                       max_m, max_k, max_n, max_f, max_s, max_r, max_rows, max_cols, max_num_hubs):
+        if (max_k > m):
+            clickedLabel.configure(
+                text="Error: k cannot be greater than m! You can't split the message into more blocks than its length.")
+            return False
+        if (max_k > n):
+            clickedLabel.configure(
+                text="Error: n cannot be less than k! You need to encode into more blocks than you started with.")
+            return False
+        if (max_n > f):
+            clickedLabel.configure(
+                text="Error: f cannot be less than n! You need at least n relays to hold your code blocks.")
+            return False
+        if (currType != "Euclidean" and max_f > s):
+            clickedLabel.configure(
+                text="Error: s cannot be less than f! You need to fit all of the relays on the graph.")
+            return False
+        if (currType == "Euclidean" and max_rows * max_cols > s):
+            clickedLabel.configure(
+                text="Error: rows*cols cannot be less than f! You need to fit all of the relays on the graph.")
+            return False
+        if (currType == "Network" and max_num_hubs < 4):
+            clickedLabel.configure(text="Error: number of hubs must be greater than 3!")
+            return False
+        return True
+
     # Perform animation on the given parameters
     def clickedAnimation():
         try:
             currType = graphOptionVal.get()
-            vals = []
-            for entry in entrySpace:
-                if (not entry.get().isdigit() or int(entry.get())<=0):
-                    clickedLabel.configure(text="Error: all entries must be positive integers!")
-                    return
-                vals.append(int(entry.get()))
-            m, k, n, f, s, r, rows, cols, num_hubs = vals
-            if (k > m):
-                clickedLabel.configure(text="Error: k cannot be greater than m! You can't split the message into more blocks than its length.")
+            vals = validateEntries()
+            if len(vals) == 0:
                 return
-            if (k > n):
-                clickedLabel.configure(text="Error: n cannot be less than k! You need to encode into more blocks than you started with.")
+            m, k, n, f, s, r, rows, cols, num_hubs,\
+                max_m, max_k, max_n, max_f, max_s, max_r, max_rows, max_cols, max_num_hubs = vals
+
+            proceedToSim=validateParams(*vals, currType)
+            if not proceedToSim:
                 return
-            if (n > f):
-                clickedLabel.configure(text="Error: f cannot be less than n! You need at least n relays to hold your code blocks.")
-                return
-            if (currType != "Euclidean" and f > s):
-                clickedLabel.configure(text="Error: s cannot be less than f! You need to fit all of the relays on the graph.")
-                return
-            if (currType == "Euclidean" and rows*cols > s):
-                clickedLabel.configure(text="Error: rows*cols cannot be less than f! You need to fit all of the relays on the graph.")
-                return
-            if (currType == "Network" and num_hubs < 4):
-                clickedLabel.configure(text="Error: number of hubs must be greater than 3!")
-                return
+
+            printMessageBox(vals, currType, nTests)
             clickedLabel.configure(text=animTextPre)
             simulation.animate(m, k, n, f, s, r, graph_type = currType, rows = rows, cols = cols, num_hubs=num_hubs)
             clickedLabel.configure(text=animTextPost)
@@ -111,8 +195,16 @@ def loadSimPage(window):
     def clickedTime():
         try:
             currType = graphOptionVal.get()
-            vals = [int(entry.get()) for entry in entrySpace]
-            m, k, n, f, s, r, rows, cols, num_hubs = vals
+            vals = validateEntries()
+            if len(vals) == 0:
+                return
+            m, k, n, f, s, r, rows, cols, num_hubs, \
+            max_m, max_k, max_n, max_f, max_s, max_r, max_rows, max_cols, max_num_hubs = vals
+
+            proceedToSim=validateParams(*vals, currType)
+            if not proceedToSim:
+                return
+            printMessageBox(vals, currType, nTests)
             clickedLabel.configure(text=timeTextPre)
             time = simulation.simulate(m, k, n, f, s, r, graph_type = currType, rows = rows, cols = cols, num_hubs=num_hubs)
             clickedLabel.configure(text=timeTextPost + str(time))
@@ -166,7 +258,7 @@ def loadSimPage(window):
     graphOptionLabel = Label(window, text="Choose type of graph")
     graphOptionLabel.grid(column=0, row=i)
 
-    graphOptions = OptionMenu(window, graphOptionVal, *graphTypes,\
+    graphOptions = OptionMenu(window, graphOptionVal, *graphTypes,
                               command=updateGraphType)
     graphOptions.grid(column=1, row=i)
 
@@ -174,33 +266,48 @@ def loadSimPage(window):
     i += 1
     nTests = 1
     nTestsText="Will run " + str(nTests) + " tests"
-    maxTests = 10
-    testArr = range(1, maxTests, 1)
     confirmLabel = Label(window, text=nTestsText)
 
-    dropDownVal = IntVar(window)
-    dropDownVal.set(nTests)
-    testOptionLabel = Label(window, text="Choose number of tests...")
+    testOptionLabel = Label(window, text="Enter number of tests...")
     testOptionLabel.grid(column=0, row=i)
 
-    testOptions = OptionMenu(window, dropDownVal, *testArr,\
-                             command=updateTests)
+    nTestVal = StringVar()
+    nTestVal.set(nTests)
+
+    def testOptionCallback():
+
+        if(not nTestVal.get().isdigit() or int(nTestVal.get()) <= 0):
+            nTestsText = "Error: The number of tests must be an integer larger than 0!"
+            confirmLabel.configure(text=nTestsText)
+        else:
+            nTests = nTestVal.get()
+            nTestsText = "Will run " + str(nTests) + " tests"
+            confirmLabel.configure(text=nTestsText)
+
+    testOptions = Entry(window, textvariable=nTestVal)
+    bindEntryTo(testOptions, testOptionCallback)
     testOptions.grid(column=1, row=i)
 
-    # Option to determine range of values
+
 
     # Confirmation label to summarize the results to test
     i += 1
-    summaryLabel = Label(window, text="Summary of inputs")
-    summaryLabel.grid(column=0, row=i)
+    summaryLabel = Message(window, width=200, text="Summary of inputs")
+    summaryLabel.grid(column=centerCol, row=i)
 
     # Show number of tests to run
     i += 1
-    confirmLabel.grid(column=0, row=i)
+    confirmLabel.grid(column=centerCol, row=i)
 
     # Show type of graph
     i += 1
-    graphLabel.grid(column=0, row=i)
+    graphLabel.grid(column=centerCol, row=i)
+
+    # Also provide further explanation/notes here
+    i += 1
+    etcLabel = Message(window, width=400, text="More detailed summary may be found by clicking either\n"
+                                               "'run time' or 'animate'\n")
+    etcLabel.grid(column=centerCol, row=i)
 
     # Buttons for animation and simulation
     i += 1
@@ -212,47 +319,9 @@ def loadSimPage(window):
 
     # Display clickedLabel after buttons
     i += 1
-    clickedLabel.grid(column=2, row=i)
-
-    # Navigate back to title
-    i += 1
-    titleBtn = Button(window, text="Back to title page", command=partial(loadTitlePage, window))
-    titleBtn.grid(column=0, row=i)
+    clickedLabel.grid(column=centerCol, row=i)
 
     window.mainloop()
-
-# The landing page for the simulator
-def loadTitlePage(window):
-    # Clear
-    clearWindow(window)
-
-    # Welcome text
-    welcometext = "Fast, Covert, and Robust Exchange of Messages on a Graph - Simulator"
-    titleLbl = Label(window, text=welcometext)
-    i = 0
-    titleLbl.grid(column=0, row=i)
-
-    # Buttons to navigate to other pages
-    i += 1
-
-    simBtn = Button(window, text="Try simulation", command=partial(loadSimPage, window))
-    simBtn.grid(column=0, row=i)
-
-    window.mainloop()
-
-def allChildren(window):
-    _list = window.winfo_children()
-
-    for item in _list:
-        if item.winfo_children():
-            _list.extend(item.winfo_children())
-
-    return _list
-
-def clearWindow(window):
-    widgetList = allChildren(window)
-    for item in widgetList:
-        item.grid_forget()
 
 if __name__ == "__main__":
     # Set up window for simulation
@@ -260,5 +329,5 @@ if __name__ == "__main__":
     window.title("GUI Simulator")
     windowDim = "900x600"
     window.geometry(windowDim)
-    # Load title page initially
-    loadTitlePage(window)
+    # Load simulation page
+    loadSimPage(window)

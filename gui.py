@@ -9,6 +9,8 @@ from functools import partial
 # 2. Mutliple testing feature
 # 3. Given parameters, output all results of a test in a tabulated second window/file
 
+headerFont="Helvetica 14 bold"
+headerFont2="Helvetica 12 bold"
 
 # Setup output window for simulation
 def initOutputWindow(graphType, numTests):
@@ -19,7 +21,7 @@ def initOutputWindow(graphType, numTests):
 
     titleText = "Simulation over range of values for " + graphType + " graph\n" +\
         "With " + str(numTests) + " tests for each set of parameters\n"
-    titleMessage = Message(wind, width=400, text = titleText)
+    titleMessage = Message(wind, width=400, text = titleText, font=headerFont2)
     titleMessage.grid(column=0, row=0)
     return wind
 
@@ -147,7 +149,7 @@ def loadSimPage(window):
     centerCol = 1
     # Title
     titletext = "Fast, Covert, and Robust Exchange of Messages on a Graph - Simulator"
-    titleMessage = Message(window, width=400, text=titletext)
+    titleMessage = Message(window, width=400, text=titletext, font=headerFont)
     i = 0
     titleMessage.grid(column=0, row=i)
 
@@ -403,7 +405,7 @@ def loadSimPage(window):
 
     # Confirmation label to summarize the results to test
     i += 1
-    summaryLabel = Message(window, width=200, text="Summary of inputs")
+    summaryLabel = Message(window, width=200, text="Summary of inputs", font=headerFont2)
     summaryLabel.grid(column=centerCol, row=i)
 
     # Show number of tests to run

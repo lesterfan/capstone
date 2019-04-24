@@ -205,7 +205,7 @@ def run_animation_euclidean():
     graph_type = "Euclidean"
     rows = 5
     cols = 5
-    animate(m, k, n, f, s, r, graph_type=graph_type, rows=rows, cols=cols)
+    animate(m, k, n, f, r=r, s=rows*cols, graph_type=graph_type, rows=rows, cols=cols)
 
 def run_animation_network():
     k = 5

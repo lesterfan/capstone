@@ -9,6 +9,44 @@ from functools import partial
 # 2. Mutliple testing feature
 # 3. Given parameters, output all results of a test in a tabulated second window/file
 
+
+# Setup output window for simulation
+def initOutputWindow(graphType, numTests):
+    wind = Tk()
+    wind.title("Output")
+    windowDim = "600x500"
+    wind.geometry(windowDim)
+
+    titleText = "Simulation over range of values for " + graphType + " graph\n" +\
+        "With " + str(numTests) + " tests for each set of parameters\n"
+    titleMessage = Message(wind, width=400, text = titleText)
+    titleMessage.grid(column=0, row=0)
+    return wind
+
+# Add time associated with a specific simulation to output window
+def addToOutWind(wind, indTime, rowToUpdate, \
+                 m, k, n, f, s, r, rows, cols, num_hubs,\
+                 graphType):
+    params = ["m", "k", "n", "f", "s"]
+    paramVals = [m, k, n, f, s]
+    textBody = ""
+    count = 0
+    for p in params:
+        textBody += p + " = " + str(paramVals[count]) + ", "
+        count += 1
+    if(graphType == "Regular"):
+        textBody += "r = " + str(r)
+    elif(graphType == "Euclidean"):
+        textBody += "cols = " + str(cols) +\
+            ", rows = " + str(rows)
+    elif(graphType == "Network"):
+        textBody += "num_hubs = " + str(num_hubs)
+
+    textBody += ": " + str(indTime) + " seconds"
+    newMessage = Message(wind, width=400, text=textBody)
+    newMessage.grid(column=0, row=rowToUpdate)
+
+
 # Method to perform repeated simulation given range parameters, graphType, option (simulate/animate)
 # Runs number of batches of individual tests for each set of fixed parameters
 # For the simulation option (option == 1) returns the total amount of time needed to run ALL simulations
@@ -19,6 +57,11 @@ def repeatedSimulation(min_m, min_k, min_n, min_f, min_s, min_r, min_rows, min_c
     totalTime = 0
     indTime = 0
     totalTests = 0
+    outWind = -1
+    rowToUpdate = 1
+    if(option == 1): # setup output window for each result
+        outWind = initOutputWindow(graphType, batch)
+
     for m in range(min_m, max_m + 1):
         for k in range(min_k, max_k + 1):
             for n in range(min_n, max_n + 1):
@@ -28,33 +71,45 @@ def repeatedSimulation(min_m, min_k, min_n, min_f, min_s, min_r, min_rows, min_c
                             for r in range(min_r, max_r + 1):
                                 if(option == 0):
                                     simulation.animate(m, k, n, f, s, r, graph_type=graphType,
-                                                    rows=0, cols=0, num_hubs=0, num_batch=batch)
+                                        rows=0, cols=0, num_hubs=0, num_batch=batch)
                                 else:
                                     indTime = simulation.simulate(m, k, n, f, s, r, graph_type=graphType,
-                                                    rows=0, cols=0, num_hubs=0, num_batch=batch)
+                                        rows=0, cols=0, num_hubs=0, num_batch=batch)
+                                    addToOutWind(outWind, indTime, rowToUpdate, \
+                                                 m, k, n, f, s, r, 0, 0, 0, \
+                                                 graphType)
+                                    rowToUpdate += 1
                                     totalTime += indTime
-                                totalTests += 1
+                                    totalTests += 1
                         elif(graphType == "Euclidean"):
                                 for rows in range(min_rows, max_rows + 1):
                                     for cols in range(min_cols, max_cols + 1):
                                         if(option == 0):
                                             simulation.animate(m, k, n, f, s, 0, graph_type=graphType,
-                                                            rows=rows, cols=cols, num_hubs=0, num_batch=batch)
+                                                rows=rows, cols=cols, num_hubs=0, num_batch=batch)
                                         else:
                                             indTime = simulation.simulate(m, k, n, f, s, 0, graph_type=graphType,
-                                                            rows=rows, cols=cols, num_hubs=0, num_batch=batch)
+                                                rows=rows, cols=cols, num_hubs=0, num_batch=batch)
+                                            addToOutWind(outWind, indTime, rowToUpdate, \
+                                                         m, k, n, f, s, 0, rows, cols, 0, \
+                                                         graphType)
+                                            rowToUpdate += 1
                                             totalTime += indTime
-                                        totalTests += 1
+                                            totalTests += 1
                         elif(graphType == "Network"):
                                 for num_hubs in range(min_num_hubs, max_num_hubs + 1):
                                     if(option == 0):
                                         simulation.animate(m, k, n, f, s, 0, graph_type=graphType,
-                                                        rows=0, cols=0, num_hubs=num_hubs, num_batch=batch)
+                                            rows=0, cols=0, num_hubs=num_hubs, num_batch=batch)
                                     else:
                                         indTime = simulation.simulate(m, k, n, f, s, 0, graph_type=graphType,
-                                                        rows=0, cols=0, num_hubs=num_hubs, num_batch=batch)
+                                            rows=0, cols=0, num_hubs=num_hubs, num_batch=batch)
+                                        addToOutWind(outWind, indTime, rowToUpdate, \
+                                                     m, k, n, f, s, 0, 0, 0, num_hubs, \
+                                                     graphType)
+                                        rowToUpdate += 1
                                         totalTime += indTime
-                                    totalTests += 1
+                                        totalTests += 1
     print("Total number of tests: " + str(totalTests) + "\n")
     if option == 1:
         return totalTime

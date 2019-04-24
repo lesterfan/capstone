@@ -9,6 +9,57 @@ from functools import partial
 # 2. Mutliple testing feature
 # 3. Given parameters, output all results of a test in a tabulated second window/file
 
+# Method to perform repeated simulation given range parameters, graphType, option (simulate/animate)
+# Runs number of batches of individual tests for each set of fixed parameters
+# For the simulation option (option == 1) returns the total amount of time needed to run ALL simulations
+# Would also like it to update some sort of table somewhere as well for the simulation option
+def repeatedSimulation(min_m, min_k, min_n, min_f, min_s, min_r, min_rows, min_cols, min_num_hubs,
+                max_m, max_k, max_n, max_f, max_s, max_r, max_rows, max_cols, max_num_hubs,
+                graphType, option, batch):
+    totalTime = 0
+    indTime = 0
+    totalTests = 0
+    for m in range(min_m, max_m + 1):
+        for k in range(min_k, max_k + 1):
+            for n in range(min_n, max_n + 1):
+                for f in range(min_f, max_f + 1):
+                    for s in range(min_s, max_s + 1):
+                        if(graphType == "Regular"):
+                            for r in range(min_r, max_r + 1):
+                                if(option == 0):
+                                    simulation.animate(m, k, n, f, s, r, graph_type=graphType,
+                                                    rows=0, cols=0, num_hubs=0, num_batch=batch)
+                                else:
+                                    indTime = simulation.simulate(m, k, n, f, s, r, graph_type=graphType,
+                                                    rows=0, cols=0, num_hubs=0, num_batch=batch)
+                                    totalTime += indTime
+                                totalTests += 1
+                        elif(graphType == "Euclidean"):
+                                for rows in range(min_rows, max_rows + 1):
+                                    for cols in range(min_cols, max_cols + 1):
+                                        if(option == 0):
+                                            simulation.animate(m, k, n, f, s, 0, graph_type=graphType,
+                                                            rows=rows, cols=cols, num_hubs=0, num_batch=batch)
+                                        else:
+                                            indTime = simulation.simulate(m, k, n, f, s, 0, graph_type=graphType,
+                                                            rows=rows, cols=cols, num_hubs=0, num_batch=batch)
+                                            totalTime += indTime
+                                        totalTests += 1
+                        elif(graphType == "Network"):
+                                for num_hubs in range(min_num_hubs, max_num_hubs + 1):
+                                    if(option == 0):
+                                        simulation.animate(m, k, n, f, s, 0, graph_type=graphType,
+                                                        rows=0, cols=0, num_hubs=num_hubs, num_batch=batch)
+                                    else:
+                                        indTime = simulation.simulate(m, k, n, f, s, 0, graph_type=graphType,
+                                                        rows=0, cols=0, num_hubs=num_hubs, num_batch=batch)
+                                        totalTime += indTime
+                                    totalTests += 1
+    print("Total number of tests: " + str(totalTests) + "\n")
+    if option == 1:
+        return totalTime
+
+
 def printMessageBox(enteredParams, graphType, numberOfTests):
     simTextBody = ""
     currCount = 0
@@ -145,27 +196,28 @@ def loadSimPage(window):
 
     # Proceed to simulation with the given parameters m, k, n, f, s, r, ... and type of graph
     # Update output label as needed
-    def validateParams(m, k, n, f, s, r, rows, cols, num_hubs, currType,
-                       max_m, max_k, max_n, max_f, max_s, max_r, max_rows, max_cols, max_num_hubs):
-        if (k > m):
+    def validateParams(m, k, n, f, s, r, rows, cols, num_hubs,
+                       max_m, max_k, max_n, max_f, max_s, max_r, max_rows, max_cols, max_num_hubs,
+                       currType):
+        if (k > max_m):
             clickedLabel.configure(
-                text="Error: k cannot be greater than m! You can't split the message into more blocks than its length.")
+                text="Error: k cannot be greater than largest value of m! You can't split the message into more blocks than its length.")
             return False
-        if (k > n):
+        if (k > max_n):
             clickedLabel.configure(
-                text="Error: n cannot be less than k! You need to encode into more blocks than you started with.")
+                text="Error: Maximum value of n cannot be less than k! You need to encode into more blocks than you started with.")
             return False
-        if (n > f):
+        if (n > max_f):
             clickedLabel.configure(
-                text="Error: f cannot be less than n! You need at least n relays to hold your code blocks.")
+                text="Error: Maximum value of f cannot be less than n! You need at least n relays to hold your code blocks.")
             return False
-        if (currType != "Euclidean" and f > s):
+        if (currType != "Euclidean" and f > max_s):
             clickedLabel.configure(
-                text="Error: s cannot be less than f! You need to fit all of the relays on the graph.")
+                text="Error: Maximum value of s cannot be less than f! You need to fit all of the relays on the graph.")
             return False
-        if (currType == "Euclidean" and rows * cols > s):
+        if (currType == "Euclidean" and rows * cols > max_s):
             clickedLabel.configure(
-                text="Error: rows*cols cannot be less than f! You need to fit all of the relays on the graph.")
+                text="Error: rows*cols cannot be less than s! You need to fit all of the relays on the graph.")
             return False
         return True
 
@@ -176,8 +228,8 @@ def loadSimPage(window):
             vals = validateEntries()
             if len(vals) == 0:
                 return
-            m, k, n, f, s, r, rows, cols, num_hubs,\
-                max_m, max_k, max_n, max_f, max_s, max_r, max_rows, max_cols, max_num_hubs = vals
+            #m, k, n, f, s, r, rows, cols, num_hubs,\
+                #max_m, max_k, max_n, max_f, max_s, max_r, max_rows, max_cols, max_num_hubs = vals
             batch = int(testOptions.get())
 
             proceedToSim=validateParams(*vals, currType)
@@ -186,7 +238,8 @@ def loadSimPage(window):
 
             # printMessageBox(vals, currType, nTests)
             clickedLabel.configure(text=animTextPre)
-            simulation.animate(m, k, n, f, s, r, graph_type = currType, rows = rows, cols = cols, num_hubs=num_hubs, num_batch=batch)
+            repeatedSimulation(*vals, currType, 0, batch)
+            #simulation.animate(m, k, n, f, s, r, graph_type = currType, rows = rows, cols = cols, num_hubs=num_hubs, num_batch=batch)
             clickedLabel.configure(text=animTextPost)
         except Exception as error:
             clickedLabel.configure(text=traceback.format_exc())
@@ -206,8 +259,10 @@ def loadSimPage(window):
                 return
             # printMessageBox(vals, currType, nTests)
             clickedLabel.configure(text=timeTextPre)
-            time = simulation.simulate(m, k, n, f, s, r, graph_type = currType, rows = rows, cols = cols, num_hubs=num_hubs, num_batch=batch)
-            clickedLabel.configure(text=timeTextPost + str(time) + "\n" + timeTextPost2 + str(time/batch))
+            totalTime = repeatedSimulation(*vals, currType, 1, batch)
+            #time = simulation.simulate(m, k, n, f, s, r, graph_type = currType, rows = rows, cols = cols, num_hubs=num_hubs, num_batch=batch)
+            clickedLabel.configure(text=timeTextPost + str(totalTime) + "\n"\
+                                        + timeTextPost2 + str(totalTime/batch))
         except Exception as error:
             clickedLabel.configure(text=traceback.format_exc())
 

@@ -168,7 +168,7 @@ def loadSimPage(window):
                 "num_hubs" # parameters present in only network graph
                 ]
     nParams = len(paramArr)
-    defVals = [10, 5, 10, 20, 30, 10, 1, 1, 4]
+    defVals = [10, 5, 10, 20, 30, 10, 5, 5, 4]
     textArr = ["Message length",
                "Number of message bits in each block",
                "Size of codeword after adding redundancy",
@@ -272,9 +272,17 @@ def loadSimPage(window):
             clickedLabel.configure(
                 text="Error: Maximum value of s cannot be less than f! You need to fit all of the relays on the graph.")
             return False
-        if (currType == "Euclidean" and rows * cols > max_s):
+        # if (currType == "Euclidean" and rows * cols > max_s):
+            # clickedLabel.configure(
+                # text="Error: rows*cols cannot be less than s! You need to fit all of the relays on the graph.")
+            # return False
+        if (currType == "Euclidean" and rows*cols < 20):
             clickedLabel.configure(
-                text="Error: rows*cols cannot be less than s! You need to fit all of the relays on the graph.")
+                text="Error: rows x cols must be at least 20!")
+            return False
+        if (currType == "Regular" and r > max_s-1):
+            clickedLabel.configure(
+                text="Error: r cannot be greater than s-1! The degree of the graph can be at most the number of vertices plus one.")
             return False
         return True
 
@@ -440,7 +448,7 @@ if __name__ == "__main__":
     # Set up window for simulation
     window = Tk()
     window.title("GUI Simulator")
-    windowDim = "1000x600"
+    windowDim = "1000x500"
     window.geometry(windowDim)
     # Load simulation page
     loadSimPage(window)

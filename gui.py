@@ -60,8 +60,6 @@ def loadSimPage(window):
                 "num_hubs" # parameters present in only network graph
                 ]
     nParams = len(paramArr)
-    indOfEuc = 6
-    indOfHub = 8
     defVals = [10, 5, 10, 20, 30, 10, 1, 1, 4]
     textArr = ["Message length",
                "Number of message bits in each block",
@@ -111,6 +109,7 @@ def loadSimPage(window):
     animTextPost = "Running animation on parameters- check other window"
     timeTextPre = "Finding the time taken on the given parameters..."
     timeTextPost = "Time required to run simulation on given parameters: "
+    timeTextPost2 = "Average time required per test: "
 
     # validate all parameters and output corresponding error message instead of traceback
     # return the array of inputs; break the corresponding ranges as necessary
@@ -139,34 +138,34 @@ def loadSimPage(window):
                 clickedLabel.configure(text="Invalid parameter input detected- either not positive or incorrect range-based usage")
                 return []
             j += 1
+        if not testOptions.get().isdigit() or int(testOptions.get()) <= 0:
+                clickedLabel.configure(text="Invalid parameter input detected- either not positive or incorrect range-based usage")
+                return []
         return paramsToInt
 
     # Proceed to simulation with the given parameters m, k, n, f, s, r, ... and type of graph
     # Update output label as needed
     def validateParams(m, k, n, f, s, r, rows, cols, num_hubs, currType,
                        max_m, max_k, max_n, max_f, max_s, max_r, max_rows, max_cols, max_num_hubs):
-        if (max_k > m):
+        if (k > m):
             clickedLabel.configure(
                 text="Error: k cannot be greater than m! You can't split the message into more blocks than its length.")
             return False
-        if (max_k > n):
+        if (k > n):
             clickedLabel.configure(
                 text="Error: n cannot be less than k! You need to encode into more blocks than you started with.")
             return False
-        if (max_n > f):
+        if (n > f):
             clickedLabel.configure(
                 text="Error: f cannot be less than n! You need at least n relays to hold your code blocks.")
             return False
-        if (currType != "Euclidean" and max_f > s):
+        if (currType != "Euclidean" and f > s):
             clickedLabel.configure(
                 text="Error: s cannot be less than f! You need to fit all of the relays on the graph.")
             return False
-        if (currType == "Euclidean" and max_rows * max_cols > s):
+        if (currType == "Euclidean" and rows * cols > s):
             clickedLabel.configure(
                 text="Error: rows*cols cannot be less than f! You need to fit all of the relays on the graph.")
-            return False
-        if (currType == "Network" and max_num_hubs < 4):
-            clickedLabel.configure(text="Error: number of hubs must be greater than 3!")
             return False
         return True
 
@@ -179,14 +178,15 @@ def loadSimPage(window):
                 return
             m, k, n, f, s, r, rows, cols, num_hubs,\
                 max_m, max_k, max_n, max_f, max_s, max_r, max_rows, max_cols, max_num_hubs = vals
+            batch = int(testOptions.get())
 
             proceedToSim=validateParams(*vals, currType)
             if not proceedToSim:
                 return
 
-            printMessageBox(vals, currType, nTests)
+            # printMessageBox(vals, currType, nTests)
             clickedLabel.configure(text=animTextPre)
-            simulation.animate(m, k, n, f, s, r, graph_type = currType, rows = rows, cols = cols, num_hubs=num_hubs)
+            simulation.animate(m, k, n, f, s, r, graph_type = currType, rows = rows, cols = cols, num_hubs=num_hubs, num_batch=batch)
             clickedLabel.configure(text=animTextPost)
         except Exception as error:
             clickedLabel.configure(text=traceback.format_exc())
@@ -200,14 +200,14 @@ def loadSimPage(window):
                 return
             m, k, n, f, s, r, rows, cols, num_hubs, \
             max_m, max_k, max_n, max_f, max_s, max_r, max_rows, max_cols, max_num_hubs = vals
-
+            batch = int(testOptions.get())
             proceedToSim=validateParams(*vals, currType)
             if not proceedToSim:
                 return
-            printMessageBox(vals, currType, nTests)
+            # printMessageBox(vals, currType, nTests)
             clickedLabel.configure(text=timeTextPre)
-            time = simulation.simulate(m, k, n, f, s, r, graph_type = currType, rows = rows, cols = cols, num_hubs=num_hubs)
-            clickedLabel.configure(text=timeTextPost + str(time))
+            time = simulation.simulate(m, k, n, f, s, r, graph_type = currType, rows = rows, cols = cols, num_hubs=num_hubs, num_batch=batch)
+            clickedLabel.configure(text=timeTextPost + str(time) + "\n" + timeTextPost2 + str(time/batch))
         except Exception as error:
             clickedLabel.configure(text=traceback.format_exc())
 
@@ -218,15 +218,17 @@ def loadSimPage(window):
 
     def updateVisibility(A):
         k = 0
-        for index in [indOfEuc-2,indOfEuc-1,indOfEuc,indOfEuc+1,indOfHub]:
+        cnt = 0
+        for index in range(4,9):
             if (A[k] == 0):
                 entryLabels[index].grid_forget()
                 entrySpace[index].grid_forget()
                 explainLabels[index].grid_forget()
             else:
-                entryLabels[index].grid(column=0, row=index+1)
-                entrySpace[index].grid(column=1, row=index+1)
-                explainLabels[index].grid(column=2, row=index+1)
+                entryLabels[index].grid(column=0, row=5+cnt)
+                entrySpace[index].grid(column=1, row=5+cnt)
+                explainLabels[index].grid(column=2, row=5+cnt)
+                cnt = cnt+1
             k = k+1
     
     def updateGraphType(*args):
@@ -236,9 +238,9 @@ def loadSimPage(window):
         if currType == "Euclidean":
             updateVisibility([0,0,1,1,0])
         elif currType == "Regular":
-            updateVisibility([1,1,0,0,1])
+            updateVisibility([1,1,0,0,0])
         elif currType == "Network":
-            updateVisibility([0,0,0,0,1])
+            updateVisibility([1,0,0,0,1])
         graphOptionVal.set(currType)
 
 
@@ -289,7 +291,6 @@ def loadSimPage(window):
     testOptions.grid(column=1, row=i)
 
 
-
     # Confirmation label to summarize the results to test
     i += 1
     summaryLabel = Message(window, width=200, text="Summary of inputs")
@@ -327,7 +328,7 @@ if __name__ == "__main__":
     # Set up window for simulation
     window = Tk()
     window.title("GUI Simulator")
-    windowDim = "900x600"
+    windowDim = "1000x600"
     window.geometry(windowDim)
     # Load simulation page
     loadSimPage(window)

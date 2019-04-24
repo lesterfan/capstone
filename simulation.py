@@ -35,7 +35,6 @@ class Simulation:
             assert( num_hubs > 0 )
             # sequence = nx.generators.degree_seq.create_degree_sequence(s, nx.utils.powerlaw_sequence)
             # self.G = nx.configuration_model(sequence)
-            assert( num_hubs > 3 )
             # Check all combinations of feasible degrees to see if we can make a valid graph
             hub_degrees = range( (2 * s) // num_hubs, (3 * s) // num_hubs )
             non_hub_degrees = range( 1, 4 )
@@ -91,7 +90,7 @@ class Simulation:
             curr_index = random.choice(list(self.G.adj[curr_index]))
         return time_elapsed
 
-    def simulate(self, m, k, n):
+    def simulate(self, m, k, n, batch):
         """
         Simulates the communication of a message of size m through sending
         blocks of k code bits made into n
@@ -99,7 +98,8 @@ class Simulation:
         s, in which we have f friends to which we can possibly send a message.
         """
         assert(k <= m)
-        self.num_times = m // k
+        self.num_times = batch
+        # self.num_times = m//k
         return sum([self.simulate_once(k, n, batch_num=i + 1) for i in range(self.num_times)])
 
     def animate(self, m, k, n, repeat):
@@ -163,13 +163,13 @@ def simulate_once(self, k, n, f, s, r, graph_type = "Regular", rows = 0, cols = 
     simul = Simulation(f, s, r, graph_type = graph_type, rows = rows, cols = cols, num_hubs = num_hubs)
     return simul.simulate_once(k, n)
 
-def simulate(m, k, n, f, s, r, graph_type = "Regular", rows = 0, cols = 0, num_hubs = -1):
+def simulate(m, k, n, f, s, r, graph_type = "Regular", rows = 0, cols = 0, num_hubs = -1, num_batch = 1):
     simul = Simulation(f, s, r, graph_type = graph_type, rows = rows, cols = cols, num_hubs = num_hubs)
-    return simul.simulate(m, k, n)
+    return simul.simulate(m, k, n, num_batch)
 
-def animate(m, k, n, f, s, r, repeat = False, graph_type = "Regular", rows = 0, cols = 0, num_hubs = -1):
+def animate(m, k, n, f, s, r, repeat = False, graph_type = "Regular", rows = 0, cols = 0, num_hubs = -1, num_batch = 1):
     simul = Simulation(f, s, r, graph_type = graph_type, rows = rows, cols = cols, num_hubs=num_hubs)
-    simul.simulate(m, k, n)
+    simul.simulate(m, k, n, num_batch)
     p = Process(target=simul.animate, args=(m, k, n, repeat))
     p.start()
     # simul.animate(m, k, n, repeat)

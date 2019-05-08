@@ -1,6 +1,0 @@
-1. Make the UI more clear (explain parameters) and aesthetic (colors/display)
-2. Add options for different graph shapes (Euclidean, network)
-3a. Add an option for inputting range of values and running multiple tests (e.g. "k=3:5")
-3b. Maybe make a plot of the resulting time?
-4. Have it speed up / time out if takes too long. (e.g. double speed every 30 sec of real time)
-5. How to represent nodes on graph clearly? Need four colors for nodes and two for travelers.
